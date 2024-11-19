@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .reward-item {
+            margin: 10px 0;
+        }
+        .reward-item input[type="text"] {
+            padding: 5px;
+            width: 200px;
+        }
+        .reward-item input[type="number"] {
+            padding: 5px;
+            width: 100px;
+        }
+        button {
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .reward-list {
+            margin-top: 20px;
+        }
+        .reward-list input[type="checkbox"] {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Manage Rewards</h1>
+
+    <div class="container">
+        <!-- Form to add rewards -->
+        <div class="reward-item">
+            <input type="text" id="reward-name" placeholder="Reward name">
+            <input type="number" id="reward-points" placeholder="Point value">
+            <button onclick="addReward()">Add Reward</button>
+        </div>
+
+        <div class="reward-list" id="reward-list">
+            <h2>Rewards List</h2>
+            <!-- Rewards list will be populated here -->
+        </div>
+
+        <button onclick="window.location.href='calendar.html'">Back to History</button>
+    </div>
+
+    <script>
+        // Initialize rewards from localStorage or empty array
+        const rewards = JSON.parse(localStorage.getItem('rewards')) || [];
+
+        // Function to render the rewards list
+        function renderRewards() {
+            const rewardListDiv = document.getElementById('reward-list');
+            rewardListDiv.innerHTML = '<h2>Rewards List</h2>';
+            rewards.forEach((reward, index) => {
+                const rewardDiv = document.createElement('div');
+                rewardDiv.innerHTML = `
+                    <input type="checkbox" id="reward-${index}" onclick="toggleReward(${index})" ${reward.checked ? 'checked' : ''}>
+                    ${reward.name} - ${reward.points} points
+                `;
+                rewardListDiv.appendChild(rewardDiv);
+            });
+        }
+
+        // Add a new reward to the list
+        function addReward() {
+            const rewardName = document.getElementById('reward-name').value;
+            const rewardPoints = parseInt(document.getElementById('reward-points').value);
+            
+            if (rewardName && !isNaN(rewardPoints)) {
+                rewards.push({ name: rewardName, points: rewardPoints, checked: false });
+                localStorage.setItem('rewards', JSON.stringify(rewards));
+                renderRewards();
+            } else {
+                alert('Please enter a valid reward name and points.');
+            }
+        }
+
+        // Function to handle checking/unchecking a reward
+        function toggleReward(index) {
+            rewards[index].checked = !rewards[index].checked;
+            localStorage.setItem('rewards', JSON.stringify(rewards));
+            updateBankedPoints(index);
+        }
+
+        // Function to update the banked points on the calendar when a reward is checked off
+        function updateBankedPoints(index) {
+            const history = JSON.parse(localStorage.getItem('bankingHistory')) || {};
+            const reward = rewards[index];
+
+            // Get today's date in YYYY-MM-DD format (avoid time zone issues)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set time to midnight to ensure no time zone offset
+            const todayString = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+            if (reward.checked) {
+                // Subtract points from the selected day (for simplicity, using today's date for now)
+                if (!history[todayString]) history[todayString] = [];
+
+                history[todayString].push(-reward.points); // Inverse the points
+                localStorage.setItem('bankingHistory', JSON.stringify(history));
+            } else {
+                // Remove the reward's inverse points
+                if (history[todayString]) {
+                    const rewardIndex = history[todayString].indexOf(-reward.points);
+                    if (rewardIndex !== -1) {
+                        history[todayString].splice(rewardIndex, 1);
+                        localStorage.setItem('bankingHistory', JSON.stringify(history));
+                    }
+                }
+            }
+        }
+
+        // Initial render of rewards list
+        renderRewards();
+    </script>
+
+</body>
+</html>
+
+

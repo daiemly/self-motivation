@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Points Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .list-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .list {
+            width: 45%;
+            text-align: left;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .list li {
+            margin-bottom: 10px;
+        }
+
+        .task-inputs {
+            margin-bottom: 20px;
+        }
+
+        .points-display {
+            margin-top: 20px;
+        }
+
+        .month-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .bank-button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Self-Motivation Experiment</h1>
+
+    <div class="container">
+        <!-- Task Input Section -->
+        <div class="task-inputs">
+            <input type="text" id="task-name" placeholder="Enter task" />
+            <input type="number" id="task-points" placeholder="Points" min="-10" max="10" />
+            <button onclick="addTask()">Add Task</button>
+        </div>
+
+        <!-- Task Lists (Goals and Setbacks) -->
+        <div class="list-container">
+            <ul class="list" id="goals-list">
+                <h3>Goals</h3>
+            </ul>
+            <ul class="list" id="setbacks-list">
+                <h3>Setbacks</h3>
+            </ul>
+        </div>
+
+        <!-- Today's Points -->
+        <div class="points-display">
+            <h3>Today's Points: <span id="total-points">0</span></h3>
+        </div>
+
+        <!-- Bank Button -->
+        <button class="bank-button" onclick="bankPoints()">Bank</button>
+
+        <!-- History Button -->
+        <button class="history-button" onclick="window.location.href='calendar.html'">History</button>
+    </div>
+
+    <script>
+        // Function to add a new task
+        function addTask() {
+            const taskName = document.getElementById('task-name').value.trim();
+            const taskPoints = parseInt(document.getElementById('task-points').value);
+
+            if (!taskName || isNaN(taskPoints) || taskPoints < -10 || taskPoints > 10) {
+                alert("Please provide a valid task name and points between -10 and 10.");
+                return;
+            }
+
+            const taskElement = document.createElement('li');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.onchange = updatePoints;
+
+            taskElement.appendChild(checkbox);
+            taskElement.appendChild(document.createTextNode(`${taskName} (${taskPoints} points)`));
+
+            if (taskPoints >= 0) {
+                // Add to goals list
+                document.getElementById('goals-list').appendChild(taskElement);
+            } else {
+                // Add to setbacks list
+                document.getElementById('setbacks-list').appendChild(taskElement);
+            }
+
+            // Clear input fields
+            document.getElementById('task-name').value = '';
+            document.getElementById('task-points').value = '';
+        }
+
+        // Function to update total points when a checkbox is changed
+        function updatePoints() {
+            let totalPoints = 0;
+
+            // Check each task in both lists
+            const allTasks = document.querySelectorAll('input[type="checkbox"]');
+            allTasks.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const taskText = checkbox.parentElement.textContent;
+                    const points = parseInt(taskText.match(/[-]?\d+/)[0]);
+                    totalPoints += points;
+                }
+            });
+
+            // Update total points display
+            document.getElementById('total-points').textContent = totalPoints;
+        }
+
+        // Function to bank the points
+        function bankPoints() {
+            const totalPoints = parseInt(document.getElementById('total-points').textContent);
+
+            if (isNaN(totalPoints)) {
+                alert("There are no points to bank.");
+                return;
+            }
+
+            const today = new Date();
+            const dateKey = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+
+            // Retrieve the current banking history from localStorage
+            let history = JSON.parse(localStorage.getItem('bankingHistory')) || {};
+
+            // Add the new points to the history
+            if (!history[dateKey]) {
+                history[dateKey] = [];
+            }
+            history[dateKey].push(totalPoints);
+
+            // Save the updated history back to localStorage
+            localStorage.setItem('bankingHistory', JSON.stringify(history));
+
+            // Clear the task lists and reset total points
+            resetTasks();
+
+            alert("Points have been banked!");
+        }
+
+        // Function to reset tasks and total points
+        function resetTasks() {
+            document.getElementById('goals-list').innerHTML = '';
+            document.getElementById('setbacks-list').innerHTML = '';
+            document.getElementById('total-points').textContent = '0';
+        }
+    </script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
